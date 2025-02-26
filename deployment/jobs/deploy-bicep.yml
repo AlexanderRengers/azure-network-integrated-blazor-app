@@ -1,0 +1,27 @@
+parameters:
+  appName: ""
+  azureSubscription: ""
+  environmentName: ""
+  resourceGroupName: ""
+  templateFile: ""
+  paramFile: ""
+  artifactName: drop
+  location: ""
+ 
+jobs:
+  - deployment: DeployBICEP
+    environment: ${{ parameters.environmentName }}   
+    strategy:
+     runOnce:
+       deploy:
+         steps:
+          - task: AzureCLI@2
+            displayName: Deploy Bicep
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az --version
+                az group create --name ${{ parameters.resourceGroupName }} --location ${{ parameters.location }}
+                az deployment group create --name ${{ parameters.appName }}  --resource-group ${{ parameters.resourceGroupName }} --template-file $(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.templateFile }} --parameters $(Pipeline.Workspace)/${{ parameters.artifactName }}/${{ parameters.paramFile }}

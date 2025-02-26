@@ -1,0 +1,42 @@
+trigger:
+- none
+
+pool:
+  name: self-hosted
+
+variables:
+  buildConfiguration: 'Release'
+  azureSubscription: '<service-connection-name>'
+  appName: 'blazorapp123'
+  resourceGroupName: 'test-blazor-iacdeploy-rg'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+- script: |
+    dotnet build --configuration $(buildConfiguration)
+  displayName: 'Build project'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'publish'
+    publishWebProjects: true
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: $(azureSubscription)
+    appType: 'webApp'
+    appName: $(appName)
+    package: '$(Build.ArtifactStagingDirectory)/*.zip'
+    resourceGroupName: $(resourceGroupName)

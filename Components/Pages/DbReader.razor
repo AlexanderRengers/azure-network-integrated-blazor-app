@@ -1,0 +1,44 @@
+﻿@page "/dbreader"
+
+@inject CustomerService CustomerService
+
+<h3>DbReader</h3>
+<p>This page reads from a SQL DB</p>
+
+@if (customers == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>CustomerID</th>
+                <th>FirstName</th>
+                <th>LastName</th>
+                <th>EmailAddress</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in customers)
+            {
+                <tr>
+                    <td>@customer.CustomerID</td>
+                    <td>@customer.FirstName</td>
+                    <td>@customer.LastName</td>
+                    <td>@customer.EmailAddress</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Customer> customers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        customers = await CustomerService.GetTopCustomersAsync();
+    }
+}

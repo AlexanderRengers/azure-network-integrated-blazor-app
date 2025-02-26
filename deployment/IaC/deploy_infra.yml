@@ -1,0 +1,50 @@
+trigger: none 
+pool:
+ vmImage: ubuntu-latest
+
+variables:
+  - name: artifactName
+    value: drop
+  - name: appName
+    value: 'BlazorApp'
+  - name: azuresubscriptionDev
+    value: <service-connection-name>
+  - name: location
+    value: germanywestcentral
+  - name: bicepTemplateFile
+    value: main.bicep
+  - name: paramFileDev
+    value: params/dev.bicepparam
+  - name: resourceGroupNameDev
+    value: test-blazor-iacdeploy-rg
+  - name: system.debug
+    value: true
+
+stages:
+#BUILD
+  - stage: Build
+    jobs:
+     - job: 
+       steps:
+        - task: PublishPipelineArtifact@1 
+          displayName: 'Publish artifact in pipeline' 
+          inputs: 
+            Targetpath: '$(Build.SourcesDirectory)/deployment/IaC'  
+            ArtifactName: $(artifactName)  
+            publishLocation: pipeline
+
+#DEV
+  - stage: BICEPDEV
+    displayName: Deploy Bicep to DEV
+    dependsOn: Build
+    jobs:
+        - template: ../jobs/deploy-bicep.yml
+          parameters:
+            appName: $(appName)
+            artifactName: $(artifactName)
+            azureSubscription: $(azuresubscriptionDev)
+            environmentName: DEV
+            location: $(location)
+            paramFile: $(paramFileDev)     
+            resourceGroupName: $(resourceGroupNameDev)
+            templateFile: $(bicepTemplateFile)
